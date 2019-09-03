@@ -149,9 +149,8 @@ def compile_data():
 
 def connect_mail(username,password):
     global server
-    server = smtplib.SMTP('smto.gmail.com', 587)
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
     server.ehlo()
-    server.starttls()
     server.login(username, password)
 
 
@@ -176,7 +175,7 @@ def send_email(msg):
 
 
 username = 'bkelm816@gmail.com'
-password = 'redsox12'
+password = 'redsox@1'
 for i in range(8):
     return_ticket = "//label[@id='flight-type-roundtrip-label-hp-flight']"
     link = 'https://www.expedia.com'
