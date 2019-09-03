@@ -102,7 +102,7 @@ def compile_data():
     durations_list = [value.text for value in duration]
 
     # Stops
-    stops = browser.find_elements_by_xpath("//span[@data-test-id='number-stops']")
+    stops = browser.find_elements_by_xpath("//span[@class='number-stops']")
     stops_list = [value.text for value in stops]
 
     # Layovers
@@ -185,7 +185,7 @@ for i in range(8):
     flights_only.click()
 
     ticket_chooser(return_ticket)
-
+    #try:
     flying_from('MCO')
     flying_to('DTW')
 
@@ -217,5 +217,11 @@ for i in range(8):
     df.to_excel('flights.xlsx')
 
     time.sleep(3600)
+    #except Exception as e:
+        #pass
+        #browser.quit()
+
+
+
 
 
