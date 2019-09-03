@@ -70,7 +70,6 @@ def search():
 
 
 df = pd.DataFrame()
-
 def compile_data():
     global df
     global dep_times_list
@@ -81,7 +80,7 @@ def compile_data():
     global stops_list
     global layovers_list
 
-    #departure times
+    # Departure times
     dep_times = browser.find_elements_by_xpath("//span[@data-test-id='departure-time']")
     dep_times_list = [value.text for value in dep_times]
 
@@ -106,7 +105,7 @@ def compile_data():
     stops_list = [value.text for value in stops]
 
     # Layovers
-    layovers = browser.find_elements_by_xpath("//span[@data-test-id='layover-airport-stops']")
+    layovers = browser.find_elements_by_xpath("//span[@data-test-id='layover-info']")
     layovers_list = [value.text for value in layovers]
 
     now = datetime.datetime.now()
@@ -143,7 +142,6 @@ def compile_data():
             df.loc[i, str(current_price)] = price_list[i]
         except Exception as e:
             pass
-    print('Excel Sheet Created!')
 
 
 
@@ -154,7 +152,7 @@ def connect_mail(username,password):
     server.login(username, password)
 
 
-def create_msg():
+def create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_airline, cheapest_duration, cheapest_stops, cheapest_price):
     global msg
     msg = '\nCurrent Cheapest flight:\n\nDeparture time: {}\nArrival time: {}\nAirline: {}\nFlight duration: {}\nNo. of stops: {}\nPrices: {}\n'.format(cheapest_dep_time,
                                                                                                                                                         cheapest_arrival_time,
@@ -174,21 +172,64 @@ def send_email(msg):
     server.sendmail('bkelm816@gmail.com', 'r00kie81693@gmail.com', msg)
 
 
-username = 'bkelm816@gmail.com'
-password = 'redsox@1'
-for i in range(8):
-    return_ticket = "//label[@id='flight-type-roundtrip-label-hp-flight']"
+def spirit_flying_from(departing_airport):
+    flyFrom = browser.find_element_by_xpath("//select[@id='departCityCodeSelect']")
+    flyFrom.clear()
+    time.sleep(1)
+    flyFrom.send_keys(' ' + departing_airport)
+    time.sleep(1)
+
+
+def spirit_flying_to(arriving_airport):
+    fly_to = browser.find_element_by_xpath("//select[@id='destCityCodeSelect']")
+    fly_to.clear()
+    time.sleep(1)
+    fly_to.send_keys('  ' + arriving_airport)
+    time.sleep(1)
+
+
+def spirit_departure_date(month, day, year):
+    dep_date = browser.find_element_by_xpath("//input[@id='departDate']")
+    dep_date.clear()
+    dep_date.send_keys(month + '/' + day + '/' + year)
+
+
+def spirit_return_date(month, day, year):
+    ret_date = browser.find_element_by_xpath("//input[@id='returnDate']")
+
+    for i in range(11):
+        ret_date.send_keys(Keys.BACKSPACE)
+    ret_date.send_keys(month + '/' + day + '/' + year)
+
+
+def spirit_checker():
+    link = 'https://www.spirit.com'
+    browser.get(link)
+    spirit_flying_from('MCO')
+    spirit_flying_to('DTW')
+
+    spirit_departure_date('09', '20', '2019')
+    time.sleep(2)
+    spirit_return_date('09', '26', '2019')
+
+    flights_only = browser.find_element_by_xpath("//button[@class='pull-right btn btn-sm btn-primary button primary secondary flightSearch']")
+    flights_only.click()
+
+
+def expedia_checker():
     link = 'https://www.expedia.com'
+    return_ticket = "//label[@id='flight-type-roundtrip-label-hp-flight']"
     browser.get(link)
     time.sleep(5)
     flights_only = browser.find_element_by_xpath("//button[@id='tab-flight-tab-hp']")
     flights_only.click()
 
     ticket_chooser(return_ticket)
-    #try:
+    # try:
     flying_from('MCO')
     flying_to('DTW')
 
+    # Must be in mm/dd/yyyy format in order to work
     departure_date('09', '20', '2019')
     time.sleep(2)
     return_date('09', '26', '2019')
@@ -208,20 +249,29 @@ for i in range(8):
 
     print('run {} completed!'.format(i))
 
-    create_msg()
+    create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_airline, cheapest_duration, cheapest_stops, cheapest_price)
     connect_mail(username, password)
     send_email(msg)
 
     print('Email sent!')
 
     df.to_excel('flights.xlsx')
+    print('Excel Sheet Created!')
 
+    # except Exception as e:
+    # pass
+    # browser.quit()
+
+
+username = 'bkelm816@gmail.com'
+password = 'redsox@1'
+for i in range(8):
+    spirit_checker()
+    # expedia_checker()
+
+    # Quit the browser to save on resources
+    browser.quit()
+
+    # Check again in an hour
     time.sleep(3600)
-    #except Exception as e:
-        #pass
-        #browser.quit()
-
-
-
-
 
