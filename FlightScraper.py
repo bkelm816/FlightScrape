@@ -202,6 +202,87 @@ def spirit_return_date(month, day, year):
     ret_date.send_keys(month + '/' + day + '/' + year)
 
 
+dp = pd.DataFrame()
+def spirit_compile_data():
+    global dp
+    global dep_times_list
+    global arr_times_list
+    global airlines_list
+    global price_list
+    global durations_list
+    global stops_list
+    global layovers_list
+
+    # Departure times
+    dep_times = browser.find_elements_by_xpath("//div[@class='col-sm-2 col-xs-6 depart']")
+    dep_times_list = [value.text for value in dep_times]
+
+    # Arrival times
+    arr_times = browser.find_elements_by_xpath("//div[@class='col-sm-2 col-xs-6 arrive']")
+    arr_times_list = [value.text for value in arr_times]
+
+    # Spirit
+    # Airlines
+    # airline = browser.find_elements_by_xpath("//span[@data-test-id='airline-name']")d
+    # airlines_list = [value.text for value in airline]
+
+    # $9 FC Prices
+    fc_prices = browser.find_elements_by_xpath("//div[@class='radio invisible']|starts-with(@for,'FCRadio')")
+    fc_price_list = [value.text for value in fc_prices]
+
+    # StandardPrices
+    prices = browser.find_elements_by_xpath("//label[starts-with(@for,'DLXRadio')]")
+    price_list = [value.text for value in prices]
+
+    # Stops
+    stops = browser.find_elements_by_xpath("//a[@class='stopsLink']")
+    stops_list = [value.text for value in stops]
+
+    # Layovers
+    # layovers = browser.find_elements_by_xpath("//span[@data-test-id='layover-info']")
+    # layovers_list = [value.text for value in layovers]
+
+    now = datetime.datetime.now()
+    current_date = (str(now.year) + '-' + str(now.month) + '-' + str(now.day))
+    current_time = (str(now.hour) + ':' + str(now.minute))
+    current_price = 'Price' + '(' + current_date + '---' + current_time + ')'
+    fc_current_price = 'Fare Club Price' + '(' + current_date + '---' + current_time + ')'
+
+    for i in range(len(dep_times_list)):
+        try:
+            dp.loc[i, 'departure_time'] = dep_times_list[i]
+        except Exception as e:
+            pass
+        try:
+            dp.loc[i, 'arrival_time'] = arr_times_list[i]
+        except Exception as e:
+            pass
+        #try:
+        #    dp.loc[i, 'airline'] = airlines_list[i]
+        #except Exception as e:
+        #    pass
+        #try:
+        #    dp.loc[i, 'duration'] = durations_list[i]
+        #except Exception as e:
+        #    pass
+        try:
+            dp.loc[i, 'stops'] = stops_list[i]
+        except Exception as e:
+            pass
+        #try:
+        #    dp.loc[i, 'layovers'] = layovers_list[i]
+        #except Exception as e:
+        #    pass
+        try:
+            dp.loc[i, str(fc_current_price)] = fc_price_list[i]
+        except Exception as e:
+            pass
+        try:
+            dp.loc[i, str(current_price)] = price_list[i]
+        except Exception as e:
+            pass
+
+
 def spirit_checker():
     link = 'https://www.spirit.com'
     browser.get(link)
@@ -214,7 +295,10 @@ def spirit_checker():
 
     flights_only = browser.find_element_by_xpath("//button[@class='pull-right btn btn-sm btn-primary button primary secondary flightSearch']")
     flights_only.click()
+    time.sleep(15)
+    print("Results Ready!!!")
 
+    spirit_compile_data()
 
 def expedia_checker():
     link = 'https://www.expedia.com'
