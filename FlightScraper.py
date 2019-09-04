@@ -8,6 +8,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 
 
+# Set Safari as the default web browser.
+# TODO: Make a way to determine which browser to use based on the OS. Linux uses ChromeDriver
 browser = webdriver.Safari()
 
 def flight_chooser():
@@ -227,7 +229,7 @@ def spirit_compile_data():
     # airlines_list = [value.text for value in airline]
 
     # $9 FC Prices
-    fc_prices = browser.find_elements_by_xpath("//div[@class='radio invisible']|starts-with(@for,'FCRadio')")
+    fc_prices = browser.find_elements_by_xpath("//label[contains(text(),'$9 Fare Club:')]/following-sibling::div[1]")
     fc_price_list = [value.text for value in fc_prices]
 
     # StandardPrices
@@ -250,31 +252,35 @@ def spirit_compile_data():
 
     for i in range(len(dep_times_list)):
         try:
+            start = 0
+            stop = 67
+            if len(dep_times_list[i]):
+                dep_times_list[i] = dep_times_list[i][0:start:] + dep_times_list[i][stop+1::]
+                dep_times_list[i] = str(dep_times_list[i]).replace(u'\xa0', u' ')
+                dep_times_list[i] = str(dep_times_list[i]).rstrip()
             dp.loc[i, 'departure_time'] = dep_times_list[i]
         except Exception as e:
             pass
         try:
+            start = 0
+            stop = 67
+            # Spirit is weird, they use some sort od funky unicode and getting the times is a pain, so stripping
+            #   back all the uneeded characters as well as '\xa0'
+            if len(arr_times_list[i]):
+                arr_times_list[i] = arr_times_list[i][0:start:] + arr_times_list[i][stop+1::]
+                arr_times_list[i] = str(arr_times_list[i]).replace(u'\xa0', u' ')
+                arr_times_list[i] = str(arr_times_list[i]).rstrip()
             dp.loc[i, 'arrival_time'] = arr_times_list[i]
         except Exception as e:
             pass
-        #try:
-        #    dp.loc[i, 'airline'] = airlines_list[i]
-        #except Exception as e:
-        #    pass
-        #try:
-        #    dp.loc[i, 'duration'] = durations_list[i]
-        #except Exception as e:
-        #    pass
         try:
             dp.loc[i, 'stops'] = stops_list[i]
         except Exception as e:
             pass
-        #try:
-        #    dp.loc[i, 'layovers'] = layovers_list[i]
-        #except Exception as e:
-        #    pass
         try:
-            dp.loc[i, str(fc_current_price)] = fc_price_list[i]
+            stripped_fc_price_list = str(fc_price_list[i])
+            head, sep, tail = stripped_fc_price_list.partition('\n')
+            dp.loc[i, str(fc_current_price)] = head
         except Exception as e:
             pass
         try:
@@ -283,15 +289,24 @@ def spirit_compile_data():
             pass
 
 
-def spirit_checker():
+def spirit_create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price, cheapest_price):
+    global msg
+    msg = '\nCurrent Cheapest Spirit flight:\n\nDeparture time: {}\nArrival time: {}\nNo. of stops: {}\n$9 Fare Club Prices: {}\nStandard Prices: {}\n'.format(cheapest_dep_time,
+                                                                                                                                                        cheapest_arrival_time,
+                                                                                                                                                        cheapest_stops,
+                                                                                                                                                        cheapest_fc_price,
+                                                                                                                                                        cheapest_price)
+
+
+def spirit_checker(depart_airport_code, arrival_airport_code, depart, return_date):
     link = 'https://www.spirit.com'
     browser.get(link)
-    spirit_flying_from('MCO')
-    spirit_flying_to('DTW')
+    spirit_flying_from(depart_airport_code)
+    spirit_flying_to(arrival_airport_code)
 
-    spirit_departure_date('09', '20', '2019')
+    spirit_departure_date(depart.month, depart.day, depart.year)
     time.sleep(2)
-    spirit_return_date('09', '26', '2019')
+    spirit_return_date(return_date.month, return_date.day, return_date.year)
 
     flights_only = browser.find_element_by_xpath("//button[@class='pull-right btn btn-sm btn-primary button primary secondary flightSearch']")
     flights_only.click()
@@ -300,7 +315,25 @@ def spirit_checker():
 
     spirit_compile_data()
 
-def expedia_checker():
+    current_value = dp.iloc[0]
+
+    cheapest_dep_time = current_value[0]
+    cheapest_arrival_time = current_value[1]
+    cheapest_stops = current_value[2]
+    cheapest_fc_price = current_value[3]
+    cheapest_price = current_value[-1]
+
+    print('Spirit run {} completed!'.format(i))
+    spirit_create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price,cheapest_price)
+    connect_mail(username, password)
+    send_email(msg)
+    print('Email sent!')
+
+    dp.to_excel('flights.xlsx')
+    print('Excel Sheet Created!')
+
+
+def expedia_checker(depart_airport_code, arrival_airport_code, depart, return_date):
     link = 'https://www.expedia.com'
     return_ticket = "//label[@id='flight-type-roundtrip-label-hp-flight']"
     browser.get(link)
@@ -310,11 +343,11 @@ def expedia_checker():
 
     ticket_chooser(return_ticket)
     # try:
-    flying_from('MCO')
-    flying_to('DTW')
+    flying_from(depart_airport_code)
+    flying_to(arrival_airport_code)
 
     # Must be in mm/dd/yyyy format in order to work
-    departure_date('09', '20', '2019')
+    departure_date(depart.month, depart.day, depart.year)
     time.sleep(2)
     return_date('09', '26', '2019')
 
@@ -331,7 +364,7 @@ def expedia_checker():
     cheapest_stops = current_value[4]
     cheapest_price = current_value[-1]
 
-    print('run {} completed!'.format(i))
+    print('Expedia run {} completed!'.format(i))
 
     create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_airline, cheapest_duration, cheapest_stops, cheapest_price)
     connect_mail(username, password)
@@ -347,15 +380,31 @@ def expedia_checker():
     # browser.quit()
 
 
+class Date:
+    month = '09'
+    day = '28'
+    year = '2019'
+
+
 username = 'bkelm816@gmail.com'
 password = 'redsox@1'
 for i in range(8):
-    spirit_checker()
-    # expedia_checker()
+    depart = Date()
+    depart.month = '09'
+    depart.day = '28'
+    depart.year = '2019'
+
+    return_date = Date()
+    return_date.month = '10'
+    return_date.day = '02'
+    return_date.year = '2019'
+
+    spirit_checker('MCO', 'DTW', depart, return_date)
+    #expedia_checker()
 
     # Quit the browser to save on resources
     browser.quit()
 
     # Check again in an hour
-    time.sleep(3600)
+    time.sleep(15)
 
