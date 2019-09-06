@@ -423,8 +423,12 @@ for i in range(8):
     returning.month = '10'
     returning.day = '02'
     returning.year = '2019'
+    
+    if platform.system() == 'Linux':
+        spirit_checker('Orlando', 'Detroit', depart, returning)
+    else:
+        spirit_checker('MCO', 'DTW', depart, returning)
 
-    spirit_checker('Orlando', 'Detroit', depart, returning)
     expedia_checker('MCO', 'DTW', depart, returning)
 
     # Quit the browser to save on resources
