@@ -15,7 +15,7 @@ if platform.system() == 'Darwin':
     browser = webdriver.Safari()
 else:
     # Linux or Windows means we can use the ChromeDriver
-    browser = webdriver.ChromeDriver()
+    browser = webdriver.Chrome()
 
 
 def flight_chooser():
