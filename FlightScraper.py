@@ -288,6 +288,8 @@ def spirit_compile_data():
         except Exception as e:
             pass
 
+    return len(dep_times_list)
+
 
 def spirit_create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price, cheapest_price):
     global msg
@@ -298,7 +300,7 @@ def spirit_create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_stops, 
                                                                                                                                                         cheapest_price)
 
 
-def spirit_checker(depart_airport_code, arrival_airport_code, depart, return_date):
+def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning):
     link = 'https://www.spirit.com'
     browser.get(link)
     spirit_flying_from(depart_airport_code)
@@ -306,16 +308,25 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, return_dat
 
     spirit_departure_date(depart.month, depart.day, depart.year)
     time.sleep(2)
-    spirit_return_date(return_date.month, return_date.day, return_date.year)
+    spirit_return_date(returning.month, returning.day, returning.year)
 
     flights_only = browser.find_element_by_xpath("//button[@class='pull-right btn btn-sm btn-primary button primary secondary flightSearch']")
     flights_only.click()
     time.sleep(15)
     print("Results Ready!!!")
 
-    spirit_compile_data()
-
+    iter_length = spirit_compile_data()
+    cheapest_flight = dp.iloc[0][-1]
+    cheapest_flight = str(cheapest_flight).replace('$', '')
+    cheapest_flight = float(cheapest_flight)
     current_value = dp.iloc[0]
+    for n in range(iter_length-1):
+        next_flight = dp.iloc[n + 1][-1]
+        next_flight = str(next_flight).replace('$', '')
+        next_flight = float(next_flight)
+        if not(cheapest_flight <= next_flight):
+            cheapest_flight = next_flight
+            current_value = dp.iloc[n+1]
 
     cheapest_dep_time = current_value[0]
     cheapest_arrival_time = current_value[1]
@@ -329,11 +340,14 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, return_dat
     send_email(msg)
     print('Email sent!')
 
-    dp.to_excel('flights.xlsx')
+    now = datetime.datetime.now()
+
+    date_and_time = (str(now.year) + '-' + str(now.month) + '-' + str(now.day) + '_' + str(now.hour) + '_' + str(now.minute) + '_')
+    dp.to_excel('spirit-' + date_and_time + 'flights.xlsx')
     print('Excel Sheet Created!')
 
 
-def expedia_checker(depart_airport_code, arrival_airport_code, depart, return_date):
+def expedia_checker(depart_airport_code, arrival_airport_code, depart, returning):
     link = 'https://www.expedia.com'
     return_ticket = "//label[@id='flight-type-roundtrip-label-hp-flight']"
     browser.get(link)
@@ -349,7 +363,7 @@ def expedia_checker(depart_airport_code, arrival_airport_code, depart, return_da
     # Must be in mm/dd/yyyy format in order to work
     departure_date(depart.month, depart.day, depart.year)
     time.sleep(2)
-    return_date('09', '26', '2019')
+    return_date(returning.month, returning.day, returning.year)
 
     time.sleep(4)
     search()
@@ -372,7 +386,10 @@ def expedia_checker(depart_airport_code, arrival_airport_code, depart, return_da
 
     print('Email sent!')
 
-    df.to_excel('flights.xlsx')
+    now = datetime.datetime.now()
+
+    date_and_time = (str(now.year) + '-' + str(now.month) + '-' + str(now.day) + '_' + str(now.hour) + '_' + str(now.minute) + '_')
+    dp.to_excel('expedia-' + date_and_time + 'flights.xlsx')
     print('Excel Sheet Created!')
 
     # except Exception as e:
@@ -394,16 +411,16 @@ for i in range(8):
     depart.day = '28'
     depart.year = '2019'
 
-    return_date = Date()
-    return_date.month = '10'
-    return_date.day = '02'
-    return_date.year = '2019'
+    returning = Date()
+    returning.month = '10'
+    returning.day = '02'
+    returning.year = '2019'
 
-    spirit_checker('MCO', 'DTW', depart, return_date)
-    #expedia_checker()
+    spirit_checker('MCO', 'DTW', depart, returning)
+    expedia_checker('MCO', 'DTW', depart, returning)
 
     # Quit the browser to save on resources
-    browser.quit()
+    #browser.quit()
 
     # Check again in an hour
     time.sleep(15)
