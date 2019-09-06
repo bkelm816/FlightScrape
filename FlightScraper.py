@@ -182,17 +182,19 @@ def send_email(msg):
 
 def spirit_flying_from(departing_airport):
     flyFrom = browser.find_element_by_xpath("//select[@id='departCityCodeSelect']")
-    flyFrom.clear()
     time.sleep(1)
-    flyFrom.send_keys(' ' + departing_airport)
+    #flyFrom.click()
+    time.sleep(1)
+    flyFrom.send_keys(departing_airport)
     time.sleep(1)
 
 
 def spirit_flying_to(arriving_airport):
     fly_to = browser.find_element_by_xpath("//select[@id='destCityCodeSelect']")
-    fly_to.clear()
     time.sleep(1)
-    fly_to.send_keys('  ' + arriving_airport)
+    #fly_to.clear()
+    time.sleep(1)
+    fly_to.send_keys(arriving_airport)
     time.sleep(1)
 
 
@@ -422,12 +424,12 @@ for i in range(8):
     returning.day = '02'
     returning.year = '2019'
 
-    spirit_checker('MCO', 'DTW', depart, returning)
+    spirit_checker('Orlando', 'Detroit', depart, returning)
     expedia_checker('MCO', 'DTW', depart, returning)
 
     # Quit the browser to save on resources
     #browser.quit()
 
     # Check again in an hour
-    time.sleep(15)
+    time.sleep(1600)
 
