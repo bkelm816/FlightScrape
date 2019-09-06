@@ -1,5 +1,6 @@
 import datetime
 import time
+import platform
 
 import pandas as pd
 from selenium import webdriver
@@ -7,10 +8,15 @@ from selenium.webdriver.common.keys import Keys
 import smtplib
 from email.mime.multipart import MIMEMultipart
 
+# Tell the user which OS we are running on.
+print(platform.system())
+if platform.system() == 'Darwin':
+    # Darwin is MacOS
+    browser = webdriver.Safari()
+else:
+    # Linux or Windows means we can use the ChromeDriver
+    browser = webdriver.ChromeDriver()
 
-# Set Safari as the default web browser.
-# TODO: Make a way to determine which browser to use based on the OS. Linux uses ChromeDriver
-browser = webdriver.Safari()
 
 def flight_chooser():
     try:
