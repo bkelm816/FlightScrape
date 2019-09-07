@@ -260,24 +260,27 @@ def spirit_compile_data():
 
     for i in range(len(dep_times_list)):
         try:
-            start = 0
-            stop = 67
-            if len(dep_times_list[i]):
-                dep_times_list[i] = dep_times_list[i][0:start:] + dep_times_list[i][stop+1::]
-                dep_times_list[i] = str(dep_times_list[i]).replace(u'\xa0', u' ')
-                dep_times_list[i] = str(dep_times_list[i]).rstrip()
+            if platform.system() == 'Darwin':
+                start = 0
+                stop = 67
+                if len(dep_times_list[i]):
+                    dep_times_list[i] = dep_times_list[i][0:start:] + dep_times_list[i][stop+1::]
+                    dep_times_list[i] = str(dep_times_list[i]).replace(u'\xa0', u' ')
+                    dep_times_list[i] = str(dep_times_list[i]).rstrip()
+
             dp.loc[i, 'departure_time'] = dep_times_list[i]
         except Exception as e:
             pass
         try:
-            start = 0
-            stop = 67
-            # Spirit is weird, they use some sort od funky unicode and getting the times is a pain, so stripping
-            #   back all the uneeded characters as well as '\xa0'
-            if len(arr_times_list[i]):
-                arr_times_list[i] = arr_times_list[i][0:start:] + arr_times_list[i][stop+1::]
-                arr_times_list[i] = str(arr_times_list[i]).replace(u'\xa0', u' ')
-                arr_times_list[i] = str(arr_times_list[i]).rstrip()
+            if platform.system() == 'Darwin':
+                start = 0
+                stop = 67
+                # Spirit is weird, they use some sort od funky unicode and getting the times is a pain, so stripping
+                #   back all the uneeded characters as well as '\xa0'
+                if len(arr_times_list[i]):
+                    arr_times_list[i] = arr_times_list[i][0:start:] + arr_times_list[i][stop+1::]
+                    arr_times_list[i] = str(arr_times_list[i]).replace(u'\xa0', u' ')
+                    arr_times_list[i] = str(arr_times_list[i]).rstrip()
             dp.loc[i, 'arrival_time'] = arr_times_list[i]
         except Exception as e:
             pass
@@ -286,9 +289,12 @@ def spirit_compile_data():
         except Exception as e:
             pass
         try:
-            stripped_fc_price_list = str(fc_price_list[i])
-            head, sep, tail = stripped_fc_price_list.partition('\n')
-            dp.loc[i, str(fc_current_price)] = head
+            if platform.system() == 'Darwin':
+                stripped_fc_price_list = str(fc_price_list[i])
+                head, sep, tail = stripped_fc_price_list.partition('\n')
+                dp.loc[i, str(fc_current_price)] = head
+            else:
+                dp.loc[i, str(fc_current_price)] = fc_price_list[i]
         except Exception as e:
             pass
         try:
