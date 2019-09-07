@@ -305,13 +305,18 @@ def spirit_compile_data():
     return len(dep_times_list)
 
 
-def spirit_create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price, cheapest_price):
+def spirit_create_msg(depart, returning, cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price, cheapest_price):
     global msg
-    msg = '\nCurrent Cheapest Spirit flight:\n\nDeparture time: {}\nArrival time: {}\nNo. of stops: {}\n$9 Fare Club Prices: {}\nStandard Prices: {}\n'.format(cheapest_dep_time,
-                                                                                                                                                        cheapest_arrival_time,
-                                                                                                                                                        cheapest_stops,
-                                                                                                                                                        cheapest_fc_price,
-                                                                                                                                                        cheapest_price)
+    departing_date = depart.month + '/' + depart.day + '/' + depart.year
+    returning_date = returning.month + '/' + returning.day + '/' + returning.year
+
+    msg = '\nCurrent Cheapest Spirit flight from {} to {}:\n\nDeparture time: {}\nArrival time: {}\nNo. of stops: {}\n$9 Fare Club Prices: {}\nStandard Prices: {}\n'.format(departing_date,
+                                                                                                                                                                             returning_date,
+                                                                                                                                                                             cheapest_dep_time,
+                                                                                                                                                                             cheapest_arrival_time,
+                                                                                                                                                                             cheapest_stops,
+                                                                                                                                                                             cheapest_fc_price,
+                                                                                                                                                                             cheapest_price)
 
 
 def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning):
@@ -349,7 +354,7 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
     cheapest_price = current_value[-1]
 
     print('Spirit run {} completed!'.format(i))
-    spirit_create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price,cheapest_price)
+    spirit_create_msg(depart, returning, cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price,cheapest_price)
     connect_mail(username, password)
     send_email(msg)
     print('Email sent!')
@@ -403,7 +408,7 @@ def expedia_checker(depart_airport_code, arrival_airport_code, depart, returning
     now = datetime.datetime.now()
 
     date_and_time = (str(now.year) + '-' + str(now.month) + '-' + str(now.day) + '_' + str(now.hour) + '_' + str(now.minute) + '_')
-    dp.to_excel('expedia-' + date_and_time + 'flights.xlsx')
+    dp.to_excel('ExcelFiles/expedia-' + date_and_time + 'flights.xlsx')
     print('Excel Sheet Created!')
 
     # except Exception as e:
@@ -419,7 +424,7 @@ class Date:
 
 username = 'bkelm816@gmail.com'
 password = 'redsox@1'
-for i in range(8):
+for i in range(24):
     depart = Date()
     depart.month = '09'
     depart.day = '28'
