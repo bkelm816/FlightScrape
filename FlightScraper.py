@@ -5,6 +5,7 @@ import platform
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
 import smtplib
 from email.mime.multipart import MIMEMultipart
 
@@ -155,7 +156,9 @@ def compile_data():
 
 def connect_mail(username,password):
     global server
-    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server = smtplib.SMTP('smtp-mail.outlook.com', 587)
+    server.ehlo()
+    server.starttls()
     server.ehlo()
     server.login(username, password)
 
@@ -174,10 +177,10 @@ def send_email(msg):
     global message
     message = MIMEMultipart()
     message['Subject'] = 'Current Best Flight'
-    message['From'] = 'bkelm816@gmail.com'
+    message['From'] = 'FlightChecker1@outlook.com'
     message['to'] = 'r00kie81693@gmail.com'
 
-    server.sendmail('bkelm816@gmail.com', 'r00kie81693@gmail.com', msg)
+    server.sendmail('FlightChecker1@outlook.com', 'r00kie81693@gmail.com', msg)
 
 
 def spirit_flying_from(departing_airport):
@@ -416,15 +419,24 @@ def expedia_checker(depart_airport_code, arrival_airport_code, depart, returning
     # browser.quit()
 
 
+def chrome_clear_cache(browser, timeout=60):
+    browser.get('chrome://settings/clearBrowserData')
+
+    browser.find_element_by_xpath('//settings-ui').send_keys(Keys.ENTER)
+
+
 class Date:
     month = '09'
     day = '28'
     year = '2019'
 
 
-username = 'bkelm816@gmail.com'
-password = 'redsox@1'
+username = 'FlightChecker1@outlook.com'
+password = 'CheapFlights'
 for i in range(24):
+
+    chrome_clear_cache(browser)
+
     depart = Date()
     depart.month = '09'
     depart.day = '28'
@@ -442,9 +454,25 @@ for i in range(24):
 
     expedia_checker('MCO', 'DTW', depart, returning)
 
+
+    depart.month = '09'
+    depart.day = '28'
+    depart.year = '2019'
+
+    returning.month = '10'
+    returning.day = '02'
+    returning.year = '2019'
+
+    if platform.system() == 'Linux':
+        spirit_checker('Orlando', 'Detroit', depart, returning)
+    else:
+        spirit_checker('MCO', 'DTW', depart, returning)
+
+    expedia_checker('MCO', 'DTW', depart, returning)
+
     # Quit the browser to save on resources
     #browser.quit()
 
     # Check again in an hour
-    time.sleep(1600)
+    time.sleep(3200)
 
