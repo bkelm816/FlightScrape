@@ -24,6 +24,7 @@ def flight_chooser():
         flights = browser.find_element_by_xpath("//button[@id='tab-flight-tab-hp']")
         flights.click()
     except Exception as e:
+        print(
         pass
 
 
@@ -369,30 +370,42 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
     print('Excel Sheet Created!')
 
 
+# Check  the Expedia website for flight deals
 def expedia_checker(depart_airport_code, arrival_airport_code, depart, returning):
     link = 'https://www.expedia.com'
+
+    # This is necessary since by default Expedia does not set the roundtrip field
     return_ticket = "//label[@id='flight-type-roundtrip-label-hp-flight']"
     browser.get(link)
     time.sleep(5)
     flights_only = browser.find_element_by_xpath("//button[@id='tab-flight-tab-hp']")
     flights_only.click()
 
+    # This chooses the Roundtrip indication on the website
     ticket_chooser(return_ticket)
     # try:
+    # Fill out the airport codes for the departing and arriving airports.
     flying_from(depart_airport_code)
     flying_to(arrival_airport_code)
 
-    # Must be in mm/dd/yyyy format in order to work
+    # IMPORTANT: Must be in mm/dd/yyyy format in order to work
+    # These functions set the departing and returning dates
     departure_date(depart.month, depart.day, depart.year)
     time.sleep(2)
     return_date(returning.month, returning.day, returning.year)
 
+    # Allow time for the webpage to respond, then select the Search button
     time.sleep(4)
     search()
+
+    # This is where the magic happens, compile all the necessary data that we need and throw it into a dataframe so
+    #  we can reliably look at the data and manipulate it if needed.
     compile_data()
 
+    # Since Expedia is filtered to have the cheapest flights first, we set the current value as the first index
     current_value = df.iloc[0]
 
+    # Packaging the data up into variables so we can email it out. These values are all based off the first index
     cheapest_dep_time = current_value[0]
     cheapest_arrival_time = current_value[1]
     cheapest_airline = current_value[2]
@@ -402,14 +415,20 @@ def expedia_checker(depart_airport_code, arrival_airport_code, depart, returning
 
     print('Expedia run {} completed!'.format(i))
 
+    # Create the email message we are going to send out, include all the details we require
     create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_airline, cheapest_duration, cheapest_stops, cheapest_price)
+
+    # Sign into the mailing account
     connect_mail(username, password)
+
+    # Finally send the email out
     send_email(msg)
 
     print('Email sent!')
 
     now = datetime.datetime.now()
 
+    # Create the Excel sheet with the custom name based on the time of population
     date_and_time = (str(now.year) + '-' + str(now.month) + '-' + str(now.day) + '_' + str(now.hour) + '_' + str(now.minute) + '_')
     dp.to_excel('ExcelFiles/expedia-' + date_and_time + 'flights.xlsx')
     print('Excel Sheet Created!')
@@ -425,6 +444,7 @@ def chrome_clear_cache(browser, timeout=60):
     browser.find_element_by_xpath('//settings-ui').send_keys(Keys.ENTER)
 
 
+# Class used for departure and returning dates
 class Date:
     month = '09'
     day = '28'
