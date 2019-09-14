@@ -24,7 +24,7 @@ def flight_chooser():
         flights = browser.find_element_by_xpath("//button[@id='tab-flight-tab-hp']")
         flights.click()
     except Exception as e:
-        print(
+        print("Cannot find the Flight tab in Expedia")
         pass
 
 
@@ -41,7 +41,7 @@ def flying_from(departing_airport) :
     flyFrom.clear()
     time.sleep(1)
     flyFrom.send_keys(' ' + departing_airport)
-    time.sleep(1)
+    time.sleep(2)
     first_item = browser.find_element_by_xpath("//a[@id='aria-option-0']")
     time.sleep(1)
     first_item.click()
@@ -52,7 +52,7 @@ def flying_to(arriving_airport):
     fly_to.clear()
     time.sleep(1)
     fly_to.send_keys('  ' + arriving_airport)
-    time.sleep(1)
+    time.sleep(2)
     first_item = browser.find_element_by_xpath("//a[@id='aria-option-0']")
     time.sleep(1)
     first_item.click()
@@ -127,30 +127,37 @@ def compile_data():
         try:
             df.loc[i, 'departure_time'] = dep_times_list[i]
         except Exception as e:
+            print("Cannot assign departure times to the data frame")
             pass
         try:
             df.loc[i, 'arrival_time'] = arr_times_list[i]
         except Exception as e:
+            print("Cannot assign arrival times to the data frame")
             pass
         try:
             df.loc[i, 'airline'] = airlines_list[i]
         except Exception as e:
+            print("Cannot assign airline to the data frame")
             pass
         try:
             df.loc[i, 'duration'] = durations_list[i]
         except Exception as e:
+            print("Cannot assign duration to the data frame")
             pass
         try:
             df.loc[i, 'stops'] = stops_list[i]
         except Exception as e:
+            print("Cannot assign stops to the data frame")
             pass
         try:
             df.loc[i, 'layovers'] = layovers_list[i]
         except Exception as e:
+            print("Cannot assign layovers to the data frame")
             pass
         try:
             df.loc[i, str(current_price)] = price_list[i]
         except Exception as e:
+            print("Cannot assign current price to the data frame")
             pass
 
 
@@ -264,6 +271,7 @@ def spirit_compile_data():
 
     for i in range(len(dep_times_list)):
         try:
+            # Strip the encoding off the values we pulled from the website. This is only required for Safari setups
             if platform.system() == 'Darwin':
                 start = 0
                 stop = 67
@@ -271,20 +279,22 @@ def spirit_compile_data():
                     dep_times_list[i] = dep_times_list[i][0:start:] + dep_times_list[i][stop+1::]
                     dep_times_list[i] = str(dep_times_list[i]).replace(u'\xa0', u' ')
                     dep_times_list[i] = str(dep_times_list[i]).rstrip()
-
+            # Add the departure time into the data frame
             dp.loc[i, 'departure_time'] = dep_times_list[i]
         except Exception as e:
             pass
         try:
+            # Strip the encoding off the values we pulled from the website. This is only required for Safari setups
             if platform.system() == 'Darwin':
                 start = 0
                 stop = 67
                 # Spirit is weird, they use some sort od funky unicode and getting the times is a pain, so stripping
-                #   back all the uneeded characters as well as '\xa0'
+                #   back all the unneeded characters as well as '\xa0'
                 if len(arr_times_list[i]):
                     arr_times_list[i] = arr_times_list[i][0:start:] + arr_times_list[i][stop+1::]
                     arr_times_list[i] = str(arr_times_list[i]).replace(u'\xa0', u' ')
                     arr_times_list[i] = str(arr_times_list[i]).rstrip()
+            # Add the arrival time into the data frame
             dp.loc[i, 'arrival_time'] = arr_times_list[i]
         except Exception as e:
             pass
@@ -343,6 +353,9 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
     cheapest_flight = str(cheapest_flight).replace('$', '')
     cheapest_flight = float(cheapest_flight)
     current_value = dp.iloc[0]
+
+    # TODO: Add in logic to handle the $9 Fare Club prices too, if the cheapest Fare Club prices are
+    #  cheaper than the cheapest standard price, then output that one
     for n in range(iter_length-1):
         next_flight = dp.iloc[n + 1][-1]
         next_flight = str(next_flight).replace('$', '')
@@ -366,7 +379,7 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
     now = datetime.datetime.now()
 
     date_and_time = (str(now.year) + '-' + str(now.month) + '-' + str(now.day) + '_' + str(now.hour) + '_' + str(now.minute) + '_')
-    dp.to_excel('spirit-' + date_and_time + 'flights.xlsx')
+    dp.to_excel('ExcelFiles/spirit-' + date_and_time + 'flights.xlsx')
     print('Excel Sheet Created!')
 
 
@@ -454,17 +467,17 @@ class Date:
 username = 'FlightChecker1@outlook.com'
 password = 'CheapFlights'
 for i in range(24):
-
-    chrome_clear_cache(browser)
+    if platform.system() != 'Darwin':
+        chrome_clear_cache(browser)
 
     depart = Date()
-    depart.month = '09'
-    depart.day = '28'
+    depart.month = '10'
+    depart.day = '25'
     depart.year = '2019'
 
     returning = Date()
     returning.month = '10'
-    returning.day = '02'
+    returning.day = '27'
     returning.year = '2019'
     
     if platform.system() == 'Linux':
@@ -474,13 +487,12 @@ for i in range(24):
 
     expedia_checker('MCO', 'DTW', depart, returning)
 
-
-    depart.month = '09'
-    depart.day = '28'
+    depart.month = '10'
+    depart.day = '25'
     depart.year = '2019'
 
     returning.month = '10'
-    returning.day = '02'
+    returning.day = '27'
     returning.year = '2019'
 
     if platform.system() == 'Linux':
