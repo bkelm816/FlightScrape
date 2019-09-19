@@ -7,6 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 import smtplib
+from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
 
@@ -159,11 +160,11 @@ def compile_data():
 def connect_mail(username,password):
     global server
     server = smtplib.SMTP('smtp.mail.yahoo.com', 587)
+    server.set_debuglevel(0)
     server.ehlo()
     server.starttls()
     server.ehlo()
     server.login(username, password)
-    server.set_debuglevel(1)
 
 def create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_airline, cheapest_duration, cheapest_stops, cheapest_price):
     global msg
@@ -181,8 +182,10 @@ def send_email(msg):
     message['Subject'] = Header('Current Best Flight')
     message['From'] = username
     message['to'] = 'r00kie81693@gmail.com'
+    message.attach(MIMEText(msg))
 
-    server.sendmail(username, 'r00kie81693@gmail.com', msg)
+    server.sendmail(username, 'r00kie81693@gmail.com', message.as_string())
+    server.quit()
 
 
 def spirit_flying_from(departing_airport):
@@ -359,10 +362,15 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
             current_value_std = dp.iloc[n+1]
 
     # Look at the $9 Fare Club pricing
-    cheapest_flight_fc = dp.iloc[0][3]
-    cheapest_flight_fc = str(cheapest_flight_fc).replace('$', '')
-    cheapest_flight_fc = float(cheapest_flight_fc)
-    current_value_fc = dp.iloc[0]
+    if not '.' == dp.iloc[0][3] :
+        cheapest_flight_fc = dp.iloc[0][3]
+        cheapest_flight_fc = str(cheapest_flight_fc).replace('$', '')
+        cheapest_flight_fc = float(cheapest_flight_fc)
+        current_value_fc = dp.iloc[0]
+    else:
+        # Set this to a super high value since this is the first $9 Fare Club and it doesnt have usable data in it.
+        cheapest_flight_fc = 10000
+        current_value_fc = dp.iloc[0]
 
     for n in range(iter_length-1):
         next_flight_fc = dp.iloc[n + 1][3]
@@ -374,7 +382,7 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
                 current_value_fc = dp.iloc[n+1]
 
     # Compare the $9 Fare Club pricing
-    if current_value_fc <= current_value_std:
+    if cheapest_flight_fc <= cheapest_flight:
         current_value = current_value_fc
     else:
         current_value = current_value_std
