@@ -346,7 +346,7 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
     cheapest_flight = dp.iloc[0][-1]
     cheapest_flight = str(cheapest_flight).replace('$', '')
     cheapest_flight = float(cheapest_flight)
-    current_value = dp.iloc[0]
+    current_value_std = dp.iloc[0]
 
     # TODO: Add in logic to handle the $9 Fare Club prices too, if the cheapest Fare Club prices are
     #  cheaper than the cheapest standard price, then output that one
@@ -356,7 +356,28 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
         next_flight = float(next_flight)
         if not(cheapest_flight <= next_flight):
             cheapest_flight = next_flight
-            current_value = dp.iloc[n+1]
+            current_value_std = dp.iloc[n+1]
+
+    # Look at the $9 Fare Club pricing
+    cheapest_flight_fc = dp.iloc[0][3]
+    cheapest_flight_fc = str(cheapest_flight_fc).replace('$', '')
+    cheapest_flight_fc = float(cheapest_flight_fc)
+    current_value_fc = dp.iloc[0]
+
+    for n in range(iter_length-1):
+        next_flight_fc = dp.iloc[n + 1][3]
+        if '.' != next_flight_fc:
+            next_flight_fc = str(next_flight_fc).replace('$', '')
+            next_flight_fc = float(next_flight_fc)
+            if not(cheapest_flight_fc < next_flight_fc):
+                cheapest_flight_fc = next_flight_fc
+                current_value_fc = dp.iloc[n+1]
+
+    # Compare the $9 Fare Club pricing
+    if current_value_fc <= current_value_std:
+        current_value = current_value_fc
+    else:
+        current_value = current_value_std
 
     cheapest_dep_time = current_value[0]
     cheapest_arrival_time = current_value[1]
