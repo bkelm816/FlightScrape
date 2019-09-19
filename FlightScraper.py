@@ -8,6 +8,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.header import Header
 
 # Tell the user which OS we are running on.
 print(platform.system())
@@ -127,49 +128,42 @@ def compile_data():
         try:
             df.loc[i, 'departure_time'] = dep_times_list[i]
         except Exception as e:
-            print("Cannot assign departure times to the data frame")
             pass
         try:
             df.loc[i, 'arrival_time'] = arr_times_list[i]
         except Exception as e:
-            print("Cannot assign arrival times to the data frame")
             pass
         try:
             df.loc[i, 'airline'] = airlines_list[i]
         except Exception as e:
-            print("Cannot assign airline to the data frame")
             pass
         try:
             df.loc[i, 'duration'] = durations_list[i]
         except Exception as e:
-            print("Cannot assign duration to the data frame")
             pass
         try:
             df.loc[i, 'stops'] = stops_list[i]
         except Exception as e:
-            print("Cannot assign stops to the data frame")
             pass
         try:
             df.loc[i, 'layovers'] = layovers_list[i]
         except Exception as e:
-            print("Cannot assign layovers to the data frame")
             pass
         try:
             df.loc[i, str(current_price)] = price_list[i]
         except Exception as e:
-            print("Cannot assign current price to the data frame")
             pass
 
 
 
 def connect_mail(username,password):
     global server
-    server = smtplib.SMTP('smtp-mail.outlook.com', 587)
+    server = smtplib.SMTP('smtp.mail.yahoo.com', 587)
     server.ehlo()
     server.starttls()
     server.ehlo()
     server.login(username, password)
-
+    server.set_debuglevel(1)
 
 def create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_airline, cheapest_duration, cheapest_stops, cheapest_price):
     global msg
@@ -184,11 +178,11 @@ def create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_airline, cheap
 def send_email(msg):
     global message
     message = MIMEMultipart()
-    message['Subject'] = 'Current Best Flight'
-    message['From'] = 'FlightChecker1@outlook.com'
+    message['Subject'] = Header('Current Best Flight')
+    message['From'] = username
     message['to'] = 'r00kie81693@gmail.com'
 
-    server.sendmail('FlightChecker1@outlook.com', 'r00kie81693@gmail.com', msg)
+    server.sendmail(username, 'r00kie81693@gmail.com', msg)
 
 
 def spirit_flying_from(departing_airport):
@@ -464,47 +458,50 @@ class Date:
     year = '2019'
 
 
-username = 'FlightChecker1@outlook.com'
-password = 'CheapFlights'
-for i in range(24):
+username = 'flightchecker2@outlook.com'
+password = 'Cheapflights'
+username = 'flightchecker@yahoo.com'
+password = 'Cheapairlines'
+i = 0
+while(True):
     if platform.system() != 'Darwin':
         chrome_clear_cache(browser)
+    departing_city = 'DTW'
+    arriving_city = 'MCO'
 
     depart = Date()
-    depart.month = '10'
-    depart.day = '25'
+    depart.month = '11'
+    depart.day = '26'
     depart.year = '2019'
 
     returning = Date()
-    returning.month = '10'
-    returning.day = '27'
+    returning.month = '12'
+    returning.day = '03'
     returning.year = '2019'
     
     if platform.system() == 'Linux':
-        spirit_checker('Orlando', 'Detroit', depart, returning)
+        spirit_checker('Detroit', 'Orlando', depart, returning)
     else:
-        spirit_checker('MCO', 'DTW', depart, returning)
+        spirit_checker(departing_city, arriving_city, depart, returning)
 
-    expedia_checker('MCO', 'DTW', depart, returning)
+    expedia_checker(departing_city, arriving_city, depart, returning)
 
-    depart.month = '10'
-    depart.day = '25'
+    depart.month = '11'
+    depart.day = '27'
     depart.year = '2019'
 
-    returning.month = '10'
-    returning.day = '27'
+    returning.month = '12'
+    returning.day = '03'
     returning.year = '2019'
 
     if platform.system() == 'Linux':
-        spirit_checker('Orlando', 'Detroit', depart, returning)
+        spirit_checker('Detroit', 'Orlando', depart, returning)
     else:
-        spirit_checker('MCO', 'DTW', depart, returning)
+        spirit_checker(departing_city, arriving_city, depart, returning)
 
-    expedia_checker('MCO', 'DTW', depart, returning)
+    expedia_checker(departing_city, arriving_city, depart, returning)
 
-    # Quit the browser to save on resources
-    #browser.quit()
-
+    i = i + 1
     # Check again in an hour
-    time.sleep(3200)
+    time.sleep(1600)
 
