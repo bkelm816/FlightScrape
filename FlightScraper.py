@@ -15,11 +15,12 @@ from email.header import Header
 print(platform.system())
 if platform.system() == 'Darwin':
     # Darwin is MacOS
-    browser = webdriver.Safari()
+    browser = webdriver.Chrome()
+    browser_type = 'Chrome'
 else:
     # Linux or Windows means we can use the ChromeDriver
     browser = webdriver.Chrome()
-
+    browser_type = 'Chrome'
 
 def flight_chooser():
     try:
@@ -269,7 +270,7 @@ def spirit_compile_data():
     for i in range(len(dep_times_list)):
         try:
             # Strip the encoding off the values we pulled from the website. This is only required for Safari setups
-            if platform.system() == 'Darwin':
+            if browser_type == 'Safari':
                 start = 0
                 stop = 67
                 if len(dep_times_list[i]):
@@ -282,7 +283,7 @@ def spirit_compile_data():
             pass
         try:
             # Strip the encoding off the values we pulled from the website. This is only required for Safari setups
-            if platform.system() == 'Darwin':
+            if browser_type == 'Safari':
                 start = 0
                 stop = 67
                 # Spirit is weird, they use some sort od funky unicode and getting the times is a pain, so stripping
@@ -300,7 +301,7 @@ def spirit_compile_data():
         except Exception as e:
             pass
         try:
-            if platform.system() == 'Darwin':
+            if browser_type == 'Safari':
                 stripped_fc_price_list = str(fc_price_list[i])
                 head, sep, tail = stripped_fc_price_list.partition('\n')
                 dp.loc[i, str(fc_current_price)] = head
@@ -340,6 +341,7 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
     time.sleep(2)
     spirit_return_date(returning.month, returning.day, returning.year)
 
+    time.sleep(1)
     flights_only = browser.find_element_by_xpath("//button[@class='pull-right btn btn-sm btn-primary button primary secondary flightSearch']")
     flights_only.click()
     time.sleep(15)
@@ -362,26 +364,45 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
             current_value_std = dp.iloc[n+1]
 
     # Look at the $9 Fare Club pricing
-    if not '.' == dp.iloc[0][3] :
-        cheapest_flight_fc = dp.iloc[0][3]
-        cheapest_flight_fc = str(cheapest_flight_fc).replace('$', '')
-        cheapest_flight_fc = float(cheapest_flight_fc)
-        current_value_fc = dp.iloc[0]
-    else:
-        # Set this to a super high value since this is the first $9 Fare Club and it doesnt have usable data in it.
-        cheapest_flight_fc = 10000
-        current_value_fc = dp.iloc[0]
+    cheapest_flight_fc = dp.iloc[0][3]
+    if browser_type == 'Safari':
+        if not '.' == dp.iloc[0][3]:
+            cheapest_flight_fc = str(cheapest_flight_fc).replace('$', '')
+            cheapest_flight_fc = float(cheapest_flight_fc)
+            current_value_fc = dp.iloc[0]
+        else:
+            # Set this to a super high value since this is the first $9 Fare Club and it doesnt have usable data in it.
+            cheapest_flight_fc = 10000
+            current_value_fc = dp.iloc[0]
+    else: # Chrome web browser does not put a '.' in the field
+        if not '' == dp.iloc[0][3]:
+            cheapest_flight_fc = str(cheapest_flight_fc).replace('$', '')
+            cheapest_flight_fc = float(cheapest_flight_fc)
+            current_value_fc = dp.iloc[0]
+        else:
+            # Set this to a super high value since this is the first $9 Fare Club and it doesnt have usable data in it.
+            cheapest_flight_fc = 10000
+            current_value_fc = dp.iloc[0]
 
     for n in range(iter_length-1):
         next_flight_fc = dp.iloc[n + 1][3]
-        if '.' != next_flight_fc:
-            next_flight_fc = str(next_flight_fc).replace('$', '')
-            next_flight_fc = float(next_flight_fc)
-            if not(cheapest_flight_fc < next_flight_fc):
-                cheapest_flight_fc = next_flight_fc
-                current_value_fc = dp.iloc[n+1]
+        if browser_type == 'Safari':
+            if '.' != next_flight_fc:
+                next_flight_fc = str(next_flight_fc).replace('$', '')
+                next_flight_fc = float(next_flight_fc)
+                if not(cheapest_flight_fc < next_flight_fc):
+                    cheapest_flight_fc = next_flight_fc
+                    current_value_fc = dp.iloc[n+1]
+        else:
+            if '' != next_flight_fc:
+                next_flight_fc = str(next_flight_fc).replace('$', '')
+                next_flight_fc = float(next_flight_fc)
+                if not (cheapest_flight_fc < next_flight_fc):
+                    cheapest_flight_fc = next_flight_fc
+                    current_value_fc = dp.iloc[n + 1]
 
-    # Compare the $9 Fare Club pricing
+
+# Compare the $9 Fare Club pricing
     if cheapest_flight_fc <= cheapest_flight:
         current_value = current_value_fc
     else:
@@ -495,8 +516,13 @@ i = 0
 while(True):
     if platform.system() != 'Darwin':
         chrome_clear_cache(browser)
-    departing_city = 'DTW'
-    arriving_city = 'MCO'
+
+    if platform.system() == 'Darwin':
+        departing_city = 'Detroit'
+        arriving_city = 'Orlando'
+    else:
+        departing_city = 'DTW'
+        arriving_city = 'MCO'
 
     depart = Date()
     depart.month = '11'
@@ -507,11 +533,8 @@ while(True):
     returning.month = '12'
     returning.day = '03'
     returning.year = '2019'
-    
-    if platform.system() == 'Linux':
-        spirit_checker('Detroit', 'Orlando', depart, returning)
-    else:
-        spirit_checker(departing_city, arriving_city, depart, returning)
+
+    spirit_checker(departing_city, arriving_city, depart, returning)
 
     expedia_checker(departing_city, arriving_city, depart, returning)
 
@@ -523,10 +546,7 @@ while(True):
     returning.day = '03'
     returning.year = '2019'
 
-    if platform.system() == 'Linux':
-        spirit_checker('Detroit', 'Orlando', depart, returning)
-    else:
-        spirit_checker(departing_city, arriving_city, depart, returning)
+    spirit_checker(departing_city, arriving_city, depart, returning)
 
     expedia_checker(departing_city, arriving_city, depart, returning)
 
