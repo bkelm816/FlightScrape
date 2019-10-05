@@ -1,6 +1,7 @@
 import datetime
 import time
 import platform
+import SpiritChecker
 
 import pandas as pd
 from selenium import webdriver
@@ -39,7 +40,7 @@ def ticket_chooser(ticket):
         pass
 
 
-def flying_from(departing_airport) :
+def flying_from(departing_airport):
     flyFrom = browser.find_element_by_xpath("//input[@id='flight-origin-hp-flight']")
     flyFrom.clear()
     time.sleep(1)
