@@ -167,15 +167,28 @@ def connect_mail(username,password):
     server.ehlo()
     server.login(username, password)
 
-def create_msg(cheapest_dep_time, cheapest_arrival_time, cheapest_airline, cheapest_duration, cheapest_stops, cheapest_price):
-    global msg
-    msg = '\nCurrent Cheapest flight:\n\nDeparture time: {}\nArrival time: {}\nAirline: {}\nFlight duration: {}\nNo. of stops: {}\nPrices: {}\n'.format(cheapest_dep_time,
-                                                                                                                                                        cheapest_arrival_time,
-                                                                                                                                                        cheapest_airline,
-                                                                                                                                                        cheapest_duration,
-                                                                                                                                                        cheapest_stops,
-                                                                                                                                                        cheapest_price)
 
+def create_msg(depart,
+               returning,
+               cheapest_dep_time,
+               cheapest_arrival_time,
+               cheapest_airline,
+               cheapest_duration,
+               cheapest_stops,
+               cheapest_price):
+    global msg
+    departing_date = depart.month + '/' + depart.day + '/' + depart.year
+    returning_date = returning.month + '/' + returning.day + '/' + returning.year
+
+    msg = '\nCurrent Cheapest flight from {} to {}:\n\nDeparture time: {}\nArrival time: {}' \
+          '\nAirline: {}\nFlight duration: {}\nNo. of stops: {}\nPrices: {}\n'.format(departing_date,
+                                                                                      returning_date,
+                                                                                      cheapest_dep_time,
+                                                                                      cheapest_arrival_time,
+                                                                                      cheapest_airline,
+                                                                                      cheapest_duration,
+                                                                                      cheapest_stops,
+                                                                                      cheapest_price)
 
 def send_email(msg):
     global message
@@ -317,18 +330,25 @@ def spirit_compile_data():
     return len(dep_times_list)
 
 
-def spirit_create_msg(depart, returning, cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price, cheapest_price):
+def spirit_create_msg(depart,
+                      returning,
+                      cheapest_dep_time,
+                      cheapest_arrival_time,
+                      cheapest_stops,
+                      cheapest_fc_price,
+                      cheapest_price):
     global msg
     departing_date = depart.month + '/' + depart.day + '/' + depart.year
     returning_date = returning.month + '/' + returning.day + '/' + returning.year
 
-    msg = '\nCurrent Cheapest Spirit flight from {} to {}:\n\nDeparture time: {}\nArrival time: {}\nNo. of stops: {}\n$9 Fare Club Prices: {}\nStandard Prices: {}\n'.format(departing_date,
-                                                                                                                                                                             returning_date,
-                                                                                                                                                                             cheapest_dep_time,
-                                                                                                                                                                             cheapest_arrival_time,
-                                                                                                                                                                             cheapest_stops,
-                                                                                                                                                                             cheapest_fc_price,
-                                                                                                                                                                             cheapest_price)
+    msg = '\nCurrent Cheapest Spirit flight from {} to {}:\n\nDeparture time: {}\nArrival time: {}' \
+          '\nNo. of stops: {}\n$9 Fare Club Prices: {}\nStandard Prices: {}\n'.format(departing_date,
+                                                                                      returning_date,
+                                                                                      cheapest_dep_time,
+                                                                                      cheapest_arrival_time,
+                                                                                      cheapest_stops,
+                                                                                      cheapest_fc_price,
+                                                                                      cheapest_price)
 
 
 def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning):
@@ -415,7 +435,14 @@ def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning)
     cheapest_price = current_value[-1]
 
     print('Spirit run {} completed!'.format(i))
-    spirit_create_msg(depart, returning, cheapest_dep_time, cheapest_arrival_time, cheapest_stops, cheapest_fc_price,cheapest_price)
+    spirit_create_msg(depart,
+                      returning,
+                      cheapest_dep_time,
+                      cheapest_arrival_time,
+                      cheapest_stops,
+                      cheapest_fc_price,
+                      cheapest_price)
+
     connect_mail(username, password)
     send_email(msg)
     print('Email sent!')
@@ -517,12 +544,9 @@ while(True):
     if platform.system() != 'Darwin':
         chrome_clear_cache(browser)
 
-    if platform.system() == 'Darwin':
-        departing_city = 'Detroit'
-        arriving_city = 'Orlando'
-    else:
-        departing_city = 'DTW'
-        arriving_city = 'MCO'
+    departing_city = 'Detroit'
+    arriving_city = 'Orlando'
+
 
     depart = Date()
     depart.month = '11'
