@@ -1,6 +1,8 @@
 import datetime
 import time
 import platform
+from SpiritChecker import spirit_checker
+# import SpiritChecker as spirit
 
 import pandas as pd
 from selenium import webdriver
@@ -22,6 +24,7 @@ else:
     browser = webdriver.Chrome()
     browser_type = 'Chrome'
 
+
 def flight_chooser():
     try:
         flights = browser.find_element_by_xpath("//button[@id='tab-flight-tab-hp']")
@@ -39,7 +42,7 @@ def ticket_chooser(ticket):
         pass
 
 
-def flying_from(departing_airport) :
+def flying_from(departing_airport):
     flyFrom = browser.find_element_by_xpath("//input[@id='flight-origin-hp-flight']")
     flyFrom.clear()
     time.sleep(1)
@@ -157,7 +160,6 @@ def compile_data():
             pass
 
 
-
 def connect_mail(username,password):
     global server
     server = smtplib.SMTP('smtp.mail.yahoo.com', 587)
@@ -190,6 +192,7 @@ def create_msg(depart,
                                                                                       cheapest_stops,
                                                                                       cheapest_price)
 
+
 def send_email(msg):
     global message
     message = MIMEMultipart()
@@ -200,258 +203,6 @@ def send_email(msg):
 
     server.sendmail(username, 'r00kie81693@gmail.com', message.as_string())
     server.quit()
-
-
-def spirit_flying_from(departing_airport):
-    flyFrom = browser.find_element_by_xpath("//select[@id='departCityCodeSelect']")
-    time.sleep(1)
-    #flyFrom.click()
-    time.sleep(1)
-    flyFrom.send_keys(departing_airport)
-    time.sleep(1)
-
-
-def spirit_flying_to(arriving_airport):
-    fly_to = browser.find_element_by_xpath("//select[@id='destCityCodeSelect']")
-    time.sleep(1)
-    #fly_to.clear()
-    time.sleep(1)
-    fly_to.send_keys(arriving_airport)
-    time.sleep(1)
-
-
-def spirit_departure_date(month, day, year):
-    dep_date = browser.find_element_by_xpath("//input[@id='departDate']")
-    dep_date.clear()
-    dep_date.send_keys(month + '/' + day + '/' + year)
-
-
-def spirit_return_date(month, day, year):
-    ret_date = browser.find_element_by_xpath("//input[@id='returnDate']")
-
-    for i in range(11):
-        ret_date.send_keys(Keys.BACKSPACE)
-    ret_date.send_keys(month + '/' + day + '/' + year)
-
-
-dp = pd.DataFrame()
-def spirit_compile_data():
-    global dp
-    global dep_times_list
-    global arr_times_list
-    global airlines_list
-    global price_list
-    global durations_list
-    global stops_list
-    global layovers_list
-
-    # Departure times
-    dep_times = browser.find_elements_by_xpath("//div[@class='col-sm-2 col-xs-6 depart']")
-    dep_times_list = [value.text for value in dep_times]
-
-    # Arrival times
-    arr_times = browser.find_elements_by_xpath("//div[@class='col-sm-2 col-xs-6 arrive']")
-    arr_times_list = [value.text for value in arr_times]
-
-    # Spirit
-    # Airlines
-    # airline = browser.find_elements_by_xpath("//span[@data-test-id='airline-name']")d
-    # airlines_list = [value.text for value in airline]
-
-    # $9 FC Prices
-    fc_prices = browser.find_elements_by_xpath("//label[contains(text(),'$9 Fare Club:')]/following-sibling::div[1]")
-    fc_price_list = [value.text for value in fc_prices]
-
-    # StandardPrices
-    prices = browser.find_elements_by_xpath("//label[starts-with(@for,'DLXRadio')]")
-    price_list = [value.text for value in prices]
-
-    # Stops
-    stops = browser.find_elements_by_xpath("//a[@class='stopsLink']")
-    stops_list = [value.text for value in stops]
-
-    # Layovers
-    # layovers = browser.find_elements_by_xpath("//span[@data-test-id='layover-info']")
-    # layovers_list = [value.text for value in layovers]
-
-    now = datetime.datetime.now()
-    current_date = (str(now.year) + '-' + str(now.month) + '-' + str(now.day))
-    current_time = (str(now.hour) + ':' + str(now.minute))
-    current_price = 'Price' + '(' + current_date + '---' + current_time + ')'
-    fc_current_price = 'Fare Club Price' + '(' + current_date + '---' + current_time + ')'
-
-    for i in range(len(dep_times_list)):
-        try:
-            # Strip the encoding off the values we pulled from the website. This is only required for Safari setups
-            if browser_type == 'Safari':
-                start = 0
-                stop = 67
-                if len(dep_times_list[i]):
-                    dep_times_list[i] = dep_times_list[i][0:start:] + dep_times_list[i][stop+1::]
-                    dep_times_list[i] = str(dep_times_list[i]).replace(u'\xa0', u' ')
-                    dep_times_list[i] = str(dep_times_list[i]).rstrip()
-            # Add the departure time into the data frame
-            dp.loc[i, 'departure_time'] = dep_times_list[i]
-        except Exception as e:
-            pass
-        try:
-            # Strip the encoding off the values we pulled from the website. This is only required for Safari setups
-            if browser_type == 'Safari':
-                start = 0
-                stop = 67
-                # Spirit is weird, they use some sort od funky unicode and getting the times is a pain, so stripping
-                #   back all the unneeded characters as well as '\xa0'
-                if len(arr_times_list[i]):
-                    arr_times_list[i] = arr_times_list[i][0:start:] + arr_times_list[i][stop+1::]
-                    arr_times_list[i] = str(arr_times_list[i]).replace(u'\xa0', u' ')
-                    arr_times_list[i] = str(arr_times_list[i]).rstrip()
-            # Add the arrival time into the data frame
-            dp.loc[i, 'arrival_time'] = arr_times_list[i]
-        except Exception as e:
-            pass
-        try:
-            dp.loc[i, 'stops'] = stops_list[i]
-        except Exception as e:
-            pass
-        try:
-            if browser_type == 'Safari':
-                stripped_fc_price_list = str(fc_price_list[i])
-                head, sep, tail = stripped_fc_price_list.partition('\n')
-                dp.loc[i, str(fc_current_price)] = head
-            else:
-                dp.loc[i, str(fc_current_price)] = fc_price_list[i]
-        except Exception as e:
-            pass
-        try:
-            dp.loc[i, str(current_price)] = price_list[i]
-        except Exception as e:
-            pass
-
-    return len(dep_times_list)
-
-
-def spirit_create_msg(depart,
-                      returning,
-                      cheapest_dep_time,
-                      cheapest_arrival_time,
-                      cheapest_stops,
-                      cheapest_fc_price,
-                      cheapest_price):
-    global msg
-    departing_date = depart.month + '/' + depart.day + '/' + depart.year
-    returning_date = returning.month + '/' + returning.day + '/' + returning.year
-
-    msg = '\nCurrent Cheapest Spirit flight from {} to {}:\n\nDeparture time: {}\nArrival time: {}' \
-          '\nNo. of stops: {}\n$9 Fare Club Prices: {}\nStandard Prices: {}\n'.format(departing_date,
-                                                                                      returning_date,
-                                                                                      cheapest_dep_time,
-                                                                                      cheapest_arrival_time,
-                                                                                      cheapest_stops,
-                                                                                      cheapest_fc_price,
-                                                                                      cheapest_price)
-
-
-def spirit_checker(depart_airport_code, arrival_airport_code, depart, returning):
-    link = 'https://www.spirit.com'
-    browser.get(link)
-    spirit_flying_from(depart_airport_code)
-    spirit_flying_to(arrival_airport_code)
-
-    spirit_departure_date(depart.month, depart.day, depart.year)
-    time.sleep(2)
-    spirit_return_date(returning.month, returning.day, returning.year)
-
-    time.sleep(1)
-    flights_only = browser.find_element_by_xpath("//button[@class='pull-right btn btn-sm btn-primary button primary secondary flightSearch']")
-    flights_only.click()
-    time.sleep(15)
-    print("Results Ready!!!")
-
-    iter_length = spirit_compile_data()
-    cheapest_flight = dp.iloc[0][-1]
-    cheapest_flight = str(cheapest_flight).replace('$', '')
-    cheapest_flight = float(cheapest_flight)
-    current_value_std = dp.iloc[0]
-
-    # TODO: Add in logic to handle the $9 Fare Club prices too, if the cheapest Fare Club prices are
-    #  cheaper than the cheapest standard price, then output that one
-    for n in range(iter_length-1):
-        next_flight = dp.iloc[n + 1][-1]
-        next_flight = str(next_flight).replace('$', '')
-        next_flight = float(next_flight)
-        if not(cheapest_flight <= next_flight):
-            cheapest_flight = next_flight
-            current_value_std = dp.iloc[n+1]
-
-    # Look at the $9 Fare Club pricing
-    cheapest_flight_fc = dp.iloc[0][3]
-    if browser_type == 'Safari':
-        if not '.' == dp.iloc[0][3]:
-            cheapest_flight_fc = str(cheapest_flight_fc).replace('$', '')
-            cheapest_flight_fc = float(cheapest_flight_fc)
-            current_value_fc = dp.iloc[0]
-        else:
-            # Set this to a super high value since this is the first $9 Fare Club and it doesnt have usable data in it.
-            cheapest_flight_fc = 10000
-            current_value_fc = dp.iloc[0]
-    else: # Chrome web browser does not put a '.' in the field
-        if not '' == dp.iloc[0][3]:
-            cheapest_flight_fc = str(cheapest_flight_fc).replace('$', '')
-            cheapest_flight_fc = float(cheapest_flight_fc)
-            current_value_fc = dp.iloc[0]
-        else:
-            # Set this to a super high value since this is the first $9 Fare Club and it doesnt have usable data in it.
-            cheapest_flight_fc = 10000
-            current_value_fc = dp.iloc[0]
-
-    for n in range(iter_length-1):
-        next_flight_fc = dp.iloc[n + 1][3]
-        if browser_type == 'Safari':
-            if '.' != next_flight_fc:
-                next_flight_fc = str(next_flight_fc).replace('$', '')
-                next_flight_fc = float(next_flight_fc)
-                if not(cheapest_flight_fc < next_flight_fc):
-                    cheapest_flight_fc = next_flight_fc
-                    current_value_fc = dp.iloc[n+1]
-        else:
-            if '' != next_flight_fc:
-                next_flight_fc = str(next_flight_fc).replace('$', '')
-                next_flight_fc = float(next_flight_fc)
-                if not (cheapest_flight_fc < next_flight_fc):
-                    cheapest_flight_fc = next_flight_fc
-                    current_value_fc = dp.iloc[n + 1]
-
-
-# Compare the $9 Fare Club pricing
-    if cheapest_flight_fc <= cheapest_flight:
-        current_value = current_value_fc
-    else:
-        current_value = current_value_std
-
-    cheapest_dep_time = current_value[0]
-    cheapest_arrival_time = current_value[1]
-    cheapest_stops = current_value[2]
-    cheapest_fc_price = current_value[3]
-    cheapest_price = current_value[-1]
-
-    print('Spirit run {} completed!'.format(i))
-    spirit_create_msg(depart,
-                      returning,
-                      cheapest_dep_time,
-                      cheapest_arrival_time,
-                      cheapest_stops,
-                      cheapest_fc_price,
-                      cheapest_price)
-
-    connect_mail(username, password)
-    send_email(msg)
-    print('Email sent!')
-
-    now = datetime.datetime.now()
-
-    date_and_time = (str(now.year) + '-' + str(now.month) + '-' + str(now.day) + '_' + str(now.hour) + '_' + str(now.minute) + '_')
-    dp.to_excel('ExcelFiles/spirit-' + date_and_time + 'flights.xlsx')
-    print('Excel Sheet Created!')
 
 
 # Check  the Expedia website for flight deals
@@ -465,7 +216,7 @@ def expedia_checker(depart_airport_code, arrival_airport_code, depart, returning
     flights_only = browser.find_element_by_xpath("//button[@id='tab-flight-tab-hp']")
     flights_only.click()
 
-    # This chooses the Roundtrip indication on the website
+    # This chooses the Round trip indication on the website
     ticket_chooser(return_ticket)
     # try:
     # Fill out the airport codes for the departing and arriving airports.
@@ -514,7 +265,7 @@ def expedia_checker(depart_airport_code, arrival_airport_code, depart, returning
 
     # Create the Excel sheet with the custom name based on the time of population
     date_and_time = (str(now.year) + '-' + str(now.month) + '-' + str(now.day) + '_' + str(now.hour) + '_' + str(now.minute) + '_')
-    dp.to_excel('ExcelFiles/expedia-' + date_and_time + 'flights.xlsx')
+    df.to_excel('ExcelFiles/expedia-' + date_and_time + 'flights.xlsx')
     print('Excel Sheet Created!')
 
     # except Exception as e:
@@ -535,43 +286,54 @@ class Date:
     year = '2019'
 
 
+global username
+global password
+
 username = 'flightchecker2@outlook.com'
 password = 'Cheapflights'
 username = 'flightchecker@yahoo.com'
 password = 'Cheapairlines'
 i = 0
-while(True):
+while True:
     if platform.system() != 'Darwin':
         chrome_clear_cache(browser)
 
     departing_city = 'Detroit'
     arriving_city = 'Orlando'
 
-
     depart = Date()
-    depart.month = '11'
-    depart.day = '26'
+    depart.month = '10'
+    depart.day = '19'
     depart.year = '2019'
 
     returning = Date()
-    returning.month = '12'
-    returning.day = '03'
+    returning.month = '10'
+    returning.day = '21'
     returning.year = '2019'
 
-    spirit_checker(departing_city, arriving_city, depart, returning)
+    spirit_msg = spirit_checker(departing_city, arriving_city, depart, returning, browser, browser_type)
+    connect_mail(username, password)
+    send_email(spirit_msg)
+    print("Spirit email sent {}", spirit_msg)
+    print('Spirit run {} completed!'.format(i))
 
     expedia_checker(departing_city, arriving_city, depart, returning)
 
-    depart.month = '11'
-    depart.day = '27'
+    depart.month = '10'
+    depart.day = '18'
     depart.year = '2019'
 
-    returning.month = '12'
-    returning.day = '03'
+    returning.month = '10'
+    returning.day = '21'
     returning.year = '2019'
 
-    spirit_checker(departing_city, arriving_city, depart, returning)
+    spirit_msg = spirit_checker(departing_city, arriving_city, depart, returning, browser, browser_type)
+    connect_mail(username, password)
+    send_email(spirit_msg)
 
+    print("Spirit email sent {}", spirit_msg)
+    print('Spirit run {} completed!'.format(i))
+    
     expedia_checker(departing_city, arriving_city, depart, returning)
 
     i = i + 1
