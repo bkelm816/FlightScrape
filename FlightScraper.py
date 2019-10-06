@@ -327,8 +327,13 @@ while True:
     returning.day = '21'
     returning.year = '2019'
 
-    spirit_checker(departing_city, arriving_city, depart, returning, browser, browser_type)
+    spirit_msg = spirit_checker(departing_city, arriving_city, depart, returning, browser, browser_type)
+    connect_mail(username, password)
+    send_email(spirit_msg)
 
+    print("Spirit email sent {}", spirit_msg)
+    print('Spirit run {} completed!'.format(i))
+    
     expedia_checker(departing_city, arriving_city, depart, returning)
 
     i = i + 1
