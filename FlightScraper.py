@@ -302,13 +302,13 @@ while True:
     arriving_city = 'Orlando'
 
     depart = Date()
-    depart.month = '11'
-    depart.day = '26'
+    depart.month = '10'
+    depart.day = '19'
     depart.year = '2019'
 
     returning = Date()
-    returning.month = '12'
-    returning.day = '03'
+    returning.month = '10'
+    returning.day = '21'
     returning.year = '2019'
 
     spirit_msg = spirit_checker(departing_city, arriving_city, depart, returning, browser, browser_type)
@@ -319,12 +319,12 @@ while True:
 
     expedia_checker(departing_city, arriving_city, depart, returning)
 
-    depart.month = '11'
-    depart.day = '27'
+    depart.month = '10'
+    depart.day = '18'
     depart.year = '2019'
 
-    returning.month = '12'
-    returning.day = '03'
+    returning.month = '10'
+    returning.day = '21'
     returning.year = '2019'
 
     spirit_checker(departing_city, arriving_city, depart, returning, browser, browser_type)
